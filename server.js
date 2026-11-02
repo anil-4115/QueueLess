@@ -1,4 +1,5 @@
-﻿require("dotenv").config();
+﻿
+require("dotenv").config();
 
 const dns = require("node:dns");
 const dnsServers = (process.env.DNS_SERVERS || "8.8.8.8,8.8.4.4")
@@ -11,6 +12,7 @@ if (dnsServers.length > 0) {
 }
 
 const express = require("express");
+const cors = require("cors");
 const path = require("path");
 const { connectDB, disconnectDB, getDbStatus } = require("./config/db");
 const queueRoutes = require("./routes/queueRoutes");
@@ -20,7 +22,22 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
+// Enable requests from the deployed frontend.
+const allowedOrigins = [
+  "https://queueless-anil-add5.vercel.app",
+  "http://localhost:5000",
+  "http://localhost:3000",
+  "http://localhost:5173"
+];
+
 app.disable("x-powered-by");
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json({ limit: "100kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
