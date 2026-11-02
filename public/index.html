@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#102a43">
+  <meta name="description" content="QueueLess - a smart queue and digital token management system.">
+  <title>QueueLess | Smart Queue Management</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#dashboard" data-view="dashboard" aria-label="QueueLess dashboard">
+      <span class="brand-mark">Q</span>
+      <span class="brand-text">QueueLess<small>SMART QUEUE MANAGEMENT</small></span>
+    </a>
+
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="nav-link active" type="button" data-view="dashboard">Dashboard</button>
+      <button class="nav-link" type="button" data-view="queues">Queues</button>
+      <button class="nav-link" type="button" data-view="tokens">Tokens</button>
+    </nav>
+
+    <div class="connection" title="Connection status">
+      <i id="connectionDot"></i>
+      <span id="connectionText">Connecting...</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="view-dashboard" class="view active">
+      <div class="banner">
+        <div class="banner-copy">
+          <p class="eyebrow">QUEUE MANAGEMENT, SIMPLIFIED</p>
+          <h1>Less waiting.<br><span>More living.</span></h1>
+          <p>Create service queues, issue digital tokens, and keep every customer moving.</p>
+        </div>
+        <div class="banner-actions">
+          <button class="btn btn-primary" type="button" data-view="queues">+ Create a queue</button>
+          <button class="btn btn-outline" type="button" data-view="tokens">Issue a token</button>
+        </div>
+      </div>
+
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">LIVE OVERVIEW</p>
+          <h2>Dashboard</h2>
+          <p class="page-sub" id="dashboardUpdated">Loading live data...</p>
+        </div>
+        <button class="btn btn-light" type="button" id="refreshDashboard">Refresh</button>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-icon purple">Q</span>
+          <div><p>Total queues</p><strong id="statQueues">-</strong><small id="statQueuesSub">-</small></div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon amber">W</span>
+          <div><p>Waiting tokens</p><strong id="statWaiting">-</strong><small id="statWaitingSub">-</small></div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon blue">S</span>
+          <div><p>Now serving</p><strong id="statServing">-</strong><small id="statServingSub">-</small></div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon green">C</span>
+          <div><p>Completed tokens</p><strong id="statCompleted">-</strong><small id="statCompletedSub">-</small></div>
+        </article>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">ACTIVITY</p><h3>Recent tokens</h3></div>
+            <button class="btn btn-small btn-light" type="button" data-view="tokens">View all</button>
+          </div>
+          <div id="recentTokens" class="token-list">
+            <div class="loading-state">Loading recent tokens...</div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">QUEUES</p><h3>Queue snapshot</h3></div>
+            <button class="btn btn-small btn-light" type="button" data-view="queues">Manage</button>
+          </div>
+          <div id="queueSnapshot" class="snapshot-list">
+            <div class="loading-state">Loading queues...</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="view-queues" class="view">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">MANAGE SERVICES</p>
+          <h2>Queues</h2>
+          <p class="page-sub">Create, edit, activate, deactivate, or safely delete service queues.</p>
+        </div>
+        <button class="btn btn-light" type="button" id="refreshQueues">Refresh</button>
+      </div>
+
+      <div class="split-grid">
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">SETUP</p><h3 id="queueFormTitle">Create a queue</h3></div>
+            <span class="step-badge">01</span>
+          </div>
+
+          <form id="queueForm" class="form">
+            <input type="hidden" id="editingQueueId" value="">
+            <label for="queueName">Queue name
+              <input id="queueName" name="name" type="text" placeholder="e.g. General Consultation" required minlength="2" maxlength="80" autocomplete="off">
+            </label>
+            <label for="serviceDescription">Service description
+              <input id="serviceDescription" name="serviceDescription" type="text" placeholder="e.g. Walk-in doctor consultation" required minlength="3" maxlength="200" autocomplete="off">
+            </label>
+            <label for="serviceMinutes">Average service time <span class="muted">(minutes)</span>
+              <input id="serviceMinutes" name="averageServiceMinutes" type="number" min="1" max="240" step="1" value="5" required>
+            </label>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit" id="queueSubmit">Create queue</button>
+              <button class="btn btn-light hidden" type="button" id="cancelQueueEdit">Cancel edit</button>
+            </div>
+            <p id="queueMessage" class="form-message" role="status" aria-live="polite"></p>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">LIVE DATA</p><h3>Queue list</h3></div>
+            <span class="pill" id="queueListCount">0 queues</span>
+          </div>
+          <div id="queuesList" class="queues-list">
+            <div class="loading-state">Loading queues...</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="view-tokens" class="view">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">DIGITAL TICKETS</p>
+          <h2>Tokens</h2>
+          <p class="page-sub">Issue tokens, view queue position, and move customers through the service flow.</p>
+        </div>
+        <button class="btn btn-light" type="button" id="refreshTokens">Refresh</button>
+      </div>
+
+      <div class="split-grid tokens-layout">
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">NEW CUSTOMER</p><h3>Issue a token</h3></div>
+            <span class="step-badge">02</span>
+          </div>
+
+          <form id="tokenForm" class="form">
+            <label for="customerName">Customer name
+              <input id="customerName" name="customerName" type="text" placeholder="e.g. Riya Sharma" required minlength="2" maxlength="80" autocomplete="off">
+            </label>
+            <label for="customerContact">Contact information <span class="muted">(optional)</span>
+              <input id="customerContact" name="customerContact" type="text" placeholder="Phone or email" maxlength="120" autocomplete="off">
+            </label>
+            <label for="tokenQueue">Queue
+              <select id="tokenQueue" name="queueId" required>
+                <option value="">Create a queue first</option>
+              </select>
+            </label>
+            <button class="btn btn-dark" type="submit" id="tokenSubmit">Generate token</button>
+            <p id="tokenMessage" class="form-message" role="status" aria-live="polite"></p>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">TOKEN ACTIVITY</p><h3>All tokens</h3></div>
+            <span class="pill" id="tokenListCount">0 tokens</span>
+          </div>
+
+          <div class="filters">
+            <label for="filterQueue" class="sr-only">Filter by queue</label>
+            <select id="filterQueue">
+              <option value="">All queues</option>
+            </select>
+            <label for="filterStatus" class="sr-only">Filter by status</label>
+            <select id="filterStatus">
+              <option value="">All statuses</option>
+              <option value="Waiting">Waiting</option>
+              <option value="Serving">Serving</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+            <label for="filterSearch" class="sr-only">Search tokens</label>
+            <input id="filterSearch" type="search" placeholder="Search customer or token #" autocomplete="off">
+          </div>
+
+          <div id="tokensList" class="token-list">
+            <div class="loading-state">Loading tokens...</div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="queueModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="queueModalTitle" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><p class="eyebrow">QUEUE DETAILS</p><h2 id="queueModalTitle">Queue</h2></div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Close details">x</button>
+      </div>
+      <div id="queueModalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
