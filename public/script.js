@@ -1,4 +1,5 @@
-const API = "/api";
+// QueueLess backend hosted on Render. Keep the /api suffix.
+const API = "https://queueless-r6qm.onrender.com/api";
 
 const $ = id => document.getElementById(id);
 
@@ -44,12 +45,17 @@ function formatDateTime(value) {
 
 function formatShortTime(value) {
   if (!value) return "";
-  return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date(value).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
 function queueIdOf(token) {
   if (!token || !token.queue) return "";
-  return typeof token.queue === "object" ? String(token.queue._id || "") : String(token.queue);
+  return typeof token.queue === "object"
+    ? String(token.queue._id || "")
+    : String(token.queue);
 }
 
 function queueOf(token) {
@@ -75,7 +81,8 @@ function positionLabel(token) {
 
 function waitLabel(token) {
   if (token.status === "Waiting") {
-    return token.estimatedWaitMinutes === null || token.estimatedWaitMinutes === undefined
+    return token.estimatedWaitMinutes === null ||
+      token.estimatedWaitMinutes === undefined
       ? "-"
       : `${token.estimatedWaitMinutes} min`;
   }
@@ -95,7 +102,9 @@ function statusSelect(token) {
       title="${disabled ? "This token is in a final status" : "Change token status"}"
       ${disabled ? "disabled" : ""}
     >
-      ${options.map(status => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`).join("")}
+      ${options.map(status =>
+        `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`
+      ).join("")}
     </select>
   `;
 }
@@ -145,7 +154,9 @@ async function apiRequest(path, options = {}) {
   }));
 
   if (!response.ok || body.success === false) {
-    const error = new Error(body.message || `Request failed with status ${response.status}.`);
+    const error = new Error(
+      body.message || `Request failed with status ${response.status}.`
+    );
     error.status = response.status;
     error.code = body.code;
     error.body = body;
@@ -168,7 +179,9 @@ function renderStats() {
   $("statQueuesSub").textContent = totals ? `${totals.activeQueues} active` : "No data";
   $("statWaitingSub").textContent = totals ? "Customers in line" : "No data";
   $("statServingSub").textContent = totals ? "Currently with staff" : "No data";
-  $("statCompletedSub").textContent = totals ? `${totals.completedToday} completed today` : "No data";
+  $("statCompletedSub").textContent = totals
+    ? `${totals.completedToday} completed today`
+    : "No data";
 }
 
 function renderRecentTokens() {
@@ -190,14 +203,18 @@ function renderRecentTokens() {
   root.innerHTML = tokens.map(token => {
     const queue = queueOf(token);
     const queueName = queue ? queue.name : "Unknown queue";
-    const position = token.status === "Waiting" ? ` · position ${token.queuePosition}` : "";
+    const position = token.status === "Waiting"
+      ? ` · position ${token.queuePosition}`
+      : "";
 
     return `
       <div class="recent-row">
         <div class="token-number">#${escapeHtml(token.tokenNumber)}</div>
         <div class="token-main">
           <strong>${escapeHtml(token.customerName)}</strong>
-          <span>${escapeHtml(queueName)}${position}${token.customerContact ? ` · ${escapeHtml(token.customerContact)}` : ""}</span>
+          <span>${escapeHtml(queueName)}${position}${token.customerContact
+            ? ` · ${escapeHtml(token.customerContact)}`
+            : ""}</span>
         </div>
         <div class="recent-meta">
           ${statusBadge(token.status)}
@@ -211,7 +228,10 @@ function renderRecentTokens() {
 function renderQueueSnapshot() {
   const root = $("queueSnapshot");
   const queues = [...state.queues]
-    .sort((a, b) => (b.activeTokens || 0) - (a.activeTokens || 0) || (b.waitingCount || 0) - (a.waitingCount || 0))
+    .sort((a, b) =>
+      (b.activeTokens || 0) - (a.activeTokens || 0) ||
+      (b.waitingCount || 0) - (a.waitingCount || 0)
+    )
     .slice(0, 6);
 
   if (!queues.length) {
@@ -245,11 +265,13 @@ function renderQueueOptions() {
 
   const tokenSelect = $("tokenQueue");
   const previousTokenQueue = tokenSelect.value;
+
   tokenSelect.innerHTML = activeQueues.length
     ? `<option value="">Select a queue</option>${activeQueues.map(queue => (
         `<option value="${escapeHtml(queue._id)}">${escapeHtml(queue.name)} — ${escapeHtml(queue.serviceDescription)}</option>`
       )).join("")}`
     : `<option value="">No active queues</option>`;
+
   tokenSelect.disabled = activeQueues.length === 0;
 
   if (activeQueues.some(queue => queue._id === previousTokenQueue)) {
@@ -278,7 +300,8 @@ function renderQueueOptions() {
 
 function renderQueues() {
   const root = $("queuesList");
-  $("queueListCount").textContent = `${state.queues.length} ${state.queues.length === 1 ? "queue" : "queues"}`;
+  $("queueListCount").textContent =
+    `${state.queues.length} ${state.queues.length === 1 ? "queue" : "queues"}`;
 
   if (!state.queues.length) {
     root.innerHTML = `
@@ -311,16 +334,14 @@ function renderQueues() {
       <p class="queue-meta">~${queue.averageServiceMinutes} min per customer · next token #${queue.nextTokenNumber}</p>
 
       <div class="queue-actions">
-        <button class="btn btn-small" type="button" data-call-next="${escapeHtml(queue._id)}" ${queue.isActive ? "" : "disabled"}>Call next</button>
-        <button class="btn btn-small btn-light" type="button" data-view-queue="${escapeHtml(queue._id)}">Details</button>
-        <button class="btn btn-small btn-light" type="button" data-edit-queue="${escapeHtml(queue._id)}">Edit</button>
-        <button class="btn btn-small btn-ghost" type="button" data-toggle-queue="${escapeHtml(queue._id)}" data-active="${queue.isActive}">${queue.isActive ? "Deactivate" : "Activate"}</button>
+        <button class="btn btn-small" type="button" data-view-queue="${escapeHtml(queue._id)}">View details</button>
+        <button class="btn btn-small" type="button" data-edit-queue="${escapeHtml(queue._id)}">Edit</button>
+        <button class="btn btn-small" type="button" data-toggle-queue="${escapeHtml(queue._id)}" data-active="${queue.isActive}">${queue.isActive ? "Deactivate" : "Activate"}</button>
         <button class="btn btn-small btn-danger" type="button" data-delete-queue="${escapeHtml(queue._id)}">Delete</button>
       </div>
     </article>
   `).join("");
 }
-
 function getFilteredTokens() {
   let tokens = [...state.tokens];
 
@@ -343,6 +364,7 @@ function getFilteredTokens() {
         token.customerContact,
         queue ? queue.name : ""
       ].join(" ").toLowerCase();
+
       return haystack.includes(search);
     });
   }
@@ -354,7 +376,8 @@ function renderTokens() {
   const root = $("tokensList");
   const tokens = getFilteredTokens();
 
-  $("tokenListCount").textContent = `${tokens.length} ${tokens.length === 1 ? "token" : "tokens"}`;
+  $("tokenListCount").textContent =
+    `${tokens.length} ${tokens.length === 1 ? "token" : "tokens"}`;
 
   if (!state.tokens.length) {
     root.innerHTML = `
@@ -469,7 +492,11 @@ async function loadData(options = {}) {
     renderAll();
 
     $("dashboardUpdated").textContent =
-      `Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+      `Updated ${new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      })}`;
 
     if (showToast) toast("Data refreshed.", "success");
   } catch (error) {
@@ -506,8 +533,15 @@ function openQueueModal(queueId) {
   const tokens = state.tokens
     .filter(token => queueIdOf(token) === queueId)
     .sort((a, b) => {
-      const order = { Serving: 0, Waiting: 1, Completed: 2, Cancelled: 3 };
-      return (order[a.status] - order[b.status]) || (a.tokenNumber - b.tokenNumber);
+      const order = {
+        Serving: 0,
+        Waiting: 1,
+        Completed: 2,
+        Cancelled: 3
+      };
+
+      return (order[a.status] - order[b.status]) ||
+        (a.tokenNumber - b.tokenNumber);
     });
 
   $("queueModalTitle").textContent = queue.name;
@@ -592,110 +626,130 @@ function startEditQueue(queueId) {
   $("cancelQueueEdit").classList.remove("hidden");
   setMessage("queueMessage", "");
 
-  $("queueForm").scrollIntoView({ behavior: "smooth", block: "center" });
+  $("queueForm").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
   $("queueName").focus({ preventScroll: true });
 }
 
 async function deleteQueue(queueId) {
   const queue = state.queues.find(item => item._id === queueId);
-  const queueName = queue ? queue.name : "this queue";
+  if (!queue) return;
 
-  if (!window.confirm(`Delete "${queueName}"?`)) return;
+  const confirmed = window.confirm(
+    `Delete "${queue.name}"? This action cannot be undone.`
+  );
+
+  if (!confirmed) return;
 
   try {
-    await apiRequest(`/queues/${encodeURIComponent(queueId)}`, { method: "DELETE" });
-    toast("Queue deleted.", "success");
+    await apiRequest(`/queues/${encodeURIComponent(queueId)}`, {
+      method: "DELETE"
+    });
+
+    toast("Queue deleted successfully.", "success");
+    closeModal();
+    await loadData();
   } catch (error) {
-    if (error.code === "QUEUE_HAS_TOKENS") {
-      const count = error.body && error.body.tokenCount ? error.body.tokenCount : "some";
-      const confirmed = window.confirm(
-        `"${queueName}" has ${count} token(s).\n\nDelete the queue AND all of its tokens? This cannot be undone.`
-      );
-
-      if (!confirmed) return;
-
-      await apiRequest(`/queues/${encodeURIComponent(queueId)}?cascade=true`, { method: "DELETE" });
-      toast("Queue and its tokens deleted.", "success");
-    } else {
-      throw error;
-    }
+    toast(error.message, "error");
   }
-
-  closeModal();
-  await loadData();
 }
 
 async function toggleQueue(queueId, currentlyActive) {
-  await apiRequest(`/queues/${encodeURIComponent(queueId)}`, {
-    method: "PUT",
-    body: JSON.stringify({ isActive: !currentlyActive })
-  });
+  try {
+    await apiRequest(`/queues/${encodeURIComponent(queueId)}`, {
+      method: "PATCH",
+      body: {
+        isActive: !currentlyActive
+      }
+    });
 
-  toast(`Queue ${currentlyActive ? "deactivated" : "activated"}.`, "success");
-  await loadData();
+    toast(
+      currentlyActive ? "Queue deactivated." : "Queue activated.",
+      "success"
+    );
+
+    await loadData();
+  } catch (error) {
+    toast(error.message, "error");
+  }
 }
 
 async function callNext(queueId) {
-  const waiting = state.tokens
-    .filter(token => queueIdOf(token) === queueId && token.status === "Waiting")
-    .sort((a, b) => a.tokenNumber - b.tokenNumber);
+  try {
+    const response = await apiRequest(
+      `/queues/${encodeURIComponent(queueId)}/call-next`,
+      { method: "POST" }
+    );
 
-  if (!waiting.length) {
-    toast("There are no waiting tokens in this queue.", "info");
-    return;
+    toast(
+      response.message || "Next token called successfully.",
+      "success"
+    );
+
+    await loadData();
+  } catch (error) {
+    toast(error.message, "error");
   }
-
-  const token = waiting[0];
-
-  const response = await apiRequest(`/tokens/${encodeURIComponent(token._id)}/status`, {
-    method: "PATCH",
-    body: JSON.stringify({ status: "Serving" })
-  });
-
-  toast(response.message || `Now serving token #${token.tokenNumber}.`, "success");
-  await loadData();
 }
 
-/* ----------------------------- Token actions ----------------------------- */
-
 async function updateTokenStatus(select, flushModal) {
-  const tokenId = select.dataset.tokenStatus;
-  const nextStatus = select.value;
+  const tokenId = select.dataset.statusToken;
+  const status = select.value;
+
+  if (!tokenId || !status) return;
 
   select.disabled = true;
 
   try {
-    const response = await apiRequest(`/tokens/${encodeURIComponent(tokenId)}/status`, {
+    await apiRequest(`/tokens/${encodeURIComponent(tokenId)}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status: nextStatus })
+      body: { status }
     });
 
-    toast(response.message, "success");
+    toast("Token status updated.", "success");
     await loadData();
-    flushModal();
   } catch (error) {
     toast(error.message, "error");
     await loadData();
-    flushModal();
+  } finally {
+    select.disabled = false;
   }
 }
 
 async function deleteToken(tokenId) {
   const token = state.tokens.find(item => item._id === tokenId);
-  const label = token ? `token #${token.tokenNumber} for ${token.customerName}` : "this token";
+  if (!token) return;
 
-  if (!window.confirm(`Delete ${label}?`)) return;
+  const confirmed = window.confirm(
+    `Delete token #${token.tokenNumber}?`
+  );
 
-  await apiRequest(`/tokens/${encodeURIComponent(tokenId)}`, { method: "DELETE" });
-  toast("Token deleted.", "success");
-  await loadData();
+  if (!confirmed) return;
+
+  try {
+    await apiRequest(`/tokens/${encodeURIComponent(tokenId)}`, {
+      method: "DELETE"
+    });
+
+    toast("Token deleted successfully.", "success");
+    await loadData();
+  } catch (error) {
+    toast(error.message, "error");
+  }
 }
 
 function flushModal() {
-  if (state.openQueueId) openQueueModal(state.openQueueId);
+  if (state.openQueueId) {
+    openQueueModal(state.openQueueId);
+  }
 }
 
-/* ----------------------------- Event listeners ----------------------------- */
+
+
+/* ----------------------------- Queue form ----------------------------- */
 
 $("queueForm").addEventListener("submit", async event => {
   event.preventDefault();
@@ -731,7 +785,10 @@ $("queueForm").addEventListener("submit", async event => {
     }
 
     resetQueueForm();
-    setMessage("queueMessage", `Queue ${wasEditing ? "updated" : "created"} successfully.`);
+    setMessage(
+      "queueMessage",
+      `Queue ${wasEditing ? "updated" : "created"} successfully.`
+    );
     await loadData();
   } catch (error) {
     setMessage("queueMessage", error.message, true);
@@ -745,6 +802,8 @@ $("cancelQueueEdit").addEventListener("click", () => {
   resetQueueForm();
   setMessage("queueMessage", "");
 });
+
+/* ----------------------------- Token form ----------------------------- */
 
 $("tokenForm").addEventListener("submit", async event => {
   event.preventDefault();
@@ -771,9 +830,11 @@ $("tokenForm").addEventListener("submit", async event => {
     });
 
     const token = response.data;
-    const waitText = token.estimatedWaitMinutes === null || token.estimatedWaitMinutes === undefined
-      ? ""
-      : ` Estimated wait ~${token.estimatedWaitMinutes} min.`;
+    const waitText =
+      token.estimatedWaitMinutes === null ||
+      token.estimatedWaitMinutes === undefined
+        ? ""
+        : ` Estimated wait ~${token.estimatedWaitMinutes} min.`;
 
     $("customerName").value = "";
     $("customerContact").value = "";
@@ -797,9 +858,21 @@ $("tokenForm").addEventListener("submit", async event => {
   }
 });
 
-$("refreshDashboard").addEventListener("click", () => loadData({ showToast: true }));
-$("refreshQueues").addEventListener("click", () => loadData({ showToast: true }));
-$("refreshTokens").addEventListener("click", () => loadData({ showToast: true }));
+/* ----------------------------- Refresh buttons ----------------------------- */
+
+$("refreshDashboard").addEventListener("click", () =>
+  loadData({ showToast: true })
+);
+
+$("refreshQueues").addEventListener("click", () =>
+  loadData({ showToast: true })
+);
+
+$("refreshTokens").addEventListener("click", () =>
+  loadData({ showToast: true })
+);
+
+/* ----------------------------- Filters ----------------------------- */
 
 $("filterQueue").addEventListener("change", event => {
   state.queueFilter = event.target.value;
@@ -821,6 +894,8 @@ $("tokensList").addEventListener("change", event => {
   if (!select) return;
   updateTokenStatus(select, flushModal);
 });
+
+/* ----------------------------- Click actions ----------------------------- */
 
 document.addEventListener("click", async event => {
   const target = event.target;
@@ -846,9 +921,11 @@ document.addEventListener("click", async event => {
     state.queueFilter = "";
     state.statusFilter = "";
     state.search = "";
+
     $("filterQueue").value = "";
     $("filterStatus").value = "";
     $("filterSearch").value = "";
+
     renderTokens();
     return;
   }
@@ -861,11 +938,14 @@ document.addEventListener("click", async event => {
   const issueButton = target.closest("[data-issue-for]");
   if (issueButton) {
     const queueId = issueButton.dataset.issueFor;
+
     closeModal();
     switchView("tokens");
+
     state.queueFilter = queueId;
     $("filterQueue").value = queueId;
     $("tokenQueue").value = queueId;
+
     renderTokens();
     $("customerName").focus();
     return;
@@ -926,6 +1006,8 @@ document.addEventListener("click", async event => {
     }
   }
 });
+
+/* ----------------------------- Keyboard actions ----------------------------- */
 
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && state.openQueueId) {
